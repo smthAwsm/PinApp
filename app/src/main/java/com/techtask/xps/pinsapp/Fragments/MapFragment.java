@@ -33,7 +33,6 @@ public class MapFragment extends SupportMapFragment {
         args.putParcelable("MapOptions", options);
         args.putParcelableArrayList("markers", markers);
         fragment.setArguments(args);
-
         return fragment;
     }
 

@@ -20,7 +20,7 @@ import java.util.ArrayList;
  */
 public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
 
-    private String tabTitles[] = new String[] { "Tab1", "Tab2" };
+    private String tabTitles[] = new String[] { "Map", "Pins" };
 
     public FragmentPagerAdapter(FragmentManager fm) {
         super(fm);
@@ -39,7 +39,7 @@ public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
                 GoogleMapOptions mapOptions = new GoogleMapOptions();
                 mapOptions.compassEnabled(true);
                 mapOptions.mapType(GoogleMap.MAP_TYPE_HYBRID);
-            return MapFragment.create(mapOptions,new ArrayList<MarkerOptions>());
+                return MapFragment.create(mapOptions,new ArrayList<MarkerOptions>());
                 }
             case 1:{
                 return new PinsFragment();
