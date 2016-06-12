@@ -24,8 +24,8 @@ public class PinsFragment extends Fragment implements OnStartDragListener{
     private ItemTouchHelper mItemTouchHelper;
     private static PinsRecyclerAdapter recyclerAdapter;
 
-    public PinsFragment() {
-    }
+//    public PinsFragment() {
+//    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

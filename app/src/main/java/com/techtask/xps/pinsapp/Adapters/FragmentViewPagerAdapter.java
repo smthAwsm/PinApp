@@ -18,12 +18,12 @@ import java.util.ArrayList;
 /**
  * Created by XPS on 6/11/2016.
  */
-public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
+public class FragmentViewPagerAdapter extends FragmentStatePagerAdapter {
 
     private String tabTitles[] = new String[] { "Map", "Pins" };
     private static SupportMapFragment mapFragment;
 
-    public FragmentPagerAdapter(FragmentManager fm) {
+    public FragmentViewPagerAdapter(FragmentManager fm) {
         super(fm);
         mapFragment = new SupportMapFragment();
     }

@@ -23,6 +23,7 @@ public class SplashActivity extends Activity {
             startActivity(new Intent(this,LoginActivity.class));
         if (isLoggedIn()) {
             startActivity(new Intent(this,MainActivity.class));
+            //startActivity(new Intent(this,TabsHeaderActivity.class));
         }
     }
 

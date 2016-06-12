@@ -1,7 +1,14 @@
+
+/**
+ * Created by XPS on 6/11/2016.
+ */
+
 package com.techtask.xps.pinsapp.Activities;
 
 import android.app.Dialog;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -9,16 +16,23 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-
-
+import android.support.v7.graphics.Palette;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.astuetz.PagerSlidingTabStrip;
 import com.facebook.AccessToken;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -33,12 +47,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.techtask.xps.pinsapp.Adapters.FragmentPagerAdapter;
+import com.techtask.xps.pinsapp.Adapters.FragmentViewPagerAdapter;
 import com.techtask.xps.pinsapp.Fragments.PinsFragment;
 import com.techtask.xps.pinsapp.Models.MarkerModel;
 import com.techtask.xps.pinsapp.R;
 
-
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -47,9 +63,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Created by XPS on 6/11/2016.
- */
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
                                                         GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
@@ -64,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private final String CURRENT_USER_ID = AccessToken.getCurrentAccessToken().getUserId();
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm");
     private static ViewPager viewPager;
+    private AppBarLayout appBarLayout;
 
     public static List<MarkerModel> markers;
     private static Map<String,MarkerModel> markerModelBinding = new HashMap<>();
@@ -75,18 +89,119 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
 
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
-        FragmentPagerAdapter pagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager());
-        viewPager.setAdapter(pagerAdapter);
+        URL img_url = null;
+        String id = AccessToken.getCurrentAccessToken().getUserId();
 
-        PagerSlidingTabStrip tabsStrip = (PagerSlidingTabStrip) findViewById(R.id.tabs);
-        tabsStrip.setViewPager(viewPager);
 
+        try {
+            img_url = new URL("http://graph.facebook.com/"+id+"/picture?type=normal");
+            Log.w("RESPONXXXXXE",img_url.openConnection().getInputStream().toString());
+        } catch (Exception e) {
+            Log.e("MalformedURLException","%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%555");
+            e.printStackTrace();
+        }
+
+
+
+
+        FragmentViewPagerAdapter pagerAdapter = new FragmentViewPagerAdapter(getSupportFragmentManager());
+        setupActionBar(pagerAdapter);
         markers = MarkerModel.find(MarkerModel.class,"owner_Id = ?",CURRENT_USER_ID);
         loadMapIfNeeded(pagerAdapter);
     }
 
-    private  void loadMapIfNeeded(FragmentPagerAdapter pagerAdapter){
+    private void setupActionBar(FragmentViewPagerAdapter pagerAdapter){
+
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.htab_toolbar);
+        setSupportActionBar(toolbar);
+
+        getSupportActionBar().setTitle("Parallax Tabs");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+
+        viewPager = (ViewPager) findViewById(R.id.htab_viewpager);
+        viewPager.setAdapter(pagerAdapter);
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.htab_tabs);
+        tabLayout.setupWithViewPager(viewPager);
+        final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.htab_collapse_toolbar);
+        collapsingToolbarLayout.setTitleEnabled(false);
+
+
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                //"/"+AccessToken.getCurrentAccessToken().getUserId()+"?fields=id,name,picture",
+                "/"+AccessToken.getCurrentAccessToken().getUserId(),
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                    Log.e("AZAZAAZ",response.toString());
+                     //response
+                    }
+                }
+        ).executeAsync();
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+                R.drawable.header);
+
+        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+            @SuppressWarnings("ResourceType")
+            @Override
+            public void onGenerated(Palette palette) {
+
+                int vibrantColor = palette.getVibrantColor(R.color.colorPrimary);
+                int vibrantDarkColor = palette.getDarkVibrantColor(R.color.colorPrimaryDark);
+                collapsingToolbarLayout.setContentScrimColor(vibrantColor);
+                collapsingToolbarLayout.setStatusBarScrimColor(vibrantDarkColor);
+            }
+        });
+
+        appBarLayout = (AppBarLayout) findViewById(R.id.htab_appbar);
+        appBarLayout.setExpanded(false);
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+
+                viewPager.setCurrentItem(tab.getPosition());
+
+                switch (tab.getPosition()) {
+                    case 0:
+                        appBarLayout.setExpanded(false);
+                        break;
+                    case 1:
+                         break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+    }
+
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if (item.getItemId() == R.id.logoutItem){
+        finish();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private  void loadMapIfNeeded(FragmentViewPagerAdapter pagerAdapter){
 
         mapFragment = pagerAdapter.getMapFragment();
         if (mapFragment != null) {
