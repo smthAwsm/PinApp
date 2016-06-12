@@ -21,9 +21,11 @@ import java.util.ArrayList;
 public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
 
     private String tabTitles[] = new String[] { "Map", "Pins" };
+    private static SupportMapFragment mapFragment;
 
     public FragmentPagerAdapter(FragmentManager fm) {
         super(fm);
+        mapFragment = new SupportMapFragment();
     }
 
     @Override
@@ -36,16 +38,17 @@ public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
 
         switch (position){
             case 0:{
-                GoogleMapOptions mapOptions = new GoogleMapOptions();
-                mapOptions.compassEnabled(true);
-                mapOptions.mapType(GoogleMap.MAP_TYPE_HYBRID);
-                return MapFragment.create(mapOptions,new ArrayList<MarkerOptions>());
-                }
+                //GoogleMapOptions mapOptions = new GoogleMapOptions();
+                //mapOptions.compassEnabled(true);
+                //mapOptions.mapType(GoogleMap.MAP_TYPE_HYBRID);
+                //return MapFragment.create(mapOptions,new ArrayList<MarkerOptions>());
+
+                return mapFragment;
+            }
             case 1:{
                 return new PinsFragment();
             }
         }
-
         //Log.e("QAZXSWED","@@@@@@@@@@@@@@@@@@" + position + "%%%%%%%%%%%%%%%%%%%%%%%%%");
         return PageFragment.newInstance(position + 1);
     }
@@ -54,5 +57,11 @@ public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
     public CharSequence getPageTitle(int position) {
         // Generate title based on item position
         return tabTitles[position];
+    }
+
+    public static SupportMapFragment getMapFragment(){
+        if(mapFragment != null)
+            return mapFragment;
+        else return null;
     }
 }

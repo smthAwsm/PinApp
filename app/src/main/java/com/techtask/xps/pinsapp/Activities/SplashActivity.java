@@ -19,9 +19,11 @@ public class SplashActivity extends Activity {
         FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.splash_layout);
 
-        if (isLoggedIn())
+        if(!isLoggedIn())
+            startActivity(new Intent(this,LoginActivity.class));
+        if (isLoggedIn()) {
             startActivity(new Intent(this,MainActivity.class));
-        else startActivity(new Intent(this,LoginActivity.class));
+        }
     }
 
     public boolean isLoggedIn() {
