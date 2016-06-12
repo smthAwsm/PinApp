@@ -26,6 +26,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.techtask.xps.pinsapp.Adapters.FragmentPagerAdapter;
 import com.techtask.xps.pinsapp.R;
 
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private long UPDATE_INTERVAL = 60000;  /* 60 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    private List<Marker> markers;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,6 +82,37 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (googleMap != null) {
              Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
              googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+            googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(LatLng latLng) {
+                    if(googleMap.getCameraPosition().zoom > 14) {
+                        googleMap.addMarker(new MarkerOptions()
+                                .draggable(true)
+                                .position(latLng)
+                                .title("azazaz"));
+
+                    }
+                }
+            });
+
+            googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                @Override
+                public void onMarkerDragStart(Marker marker) {
+                    marker.remove();
+                }
+
+                @Override
+                public void onMarkerDrag(Marker marker) {
+
+                }
+
+                @Override
+                public void onMarkerDragEnd(Marker marker) {
+
+                }
+            });
+
              getMyLocation();
         } else {
             Toast.makeText(this, "Error - Map was null!!", Toast.LENGTH_SHORT).show();
@@ -126,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (location != null) {
             Toast.makeText(this, "GPS location was found!", Toast.LENGTH_SHORT).show();
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 16);
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
             googleMap.animateCamera(cameraUpdate);
             //googleMap.addMarker(new MarkerOptions().position(latLng)).setTitle("ur position !");
         } else {
