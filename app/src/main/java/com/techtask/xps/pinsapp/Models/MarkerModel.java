@@ -2,6 +2,8 @@ package com.techtask.xps.pinsapp.Models;
 
 import com.orm.SugarRecord;
 
+import java.util.Date;
+
 /**
  * Created by XPS on 6/12/2016.
  */
@@ -10,6 +12,7 @@ public class MarkerModel extends SugarRecord{
     private String ownerId;
     private double latitude;
     private double longtitude;
+    private String date;
     private String title;
 
     public MarkerModel() {
@@ -20,10 +23,11 @@ public class MarkerModel extends SugarRecord{
         this.longtitude = longtitude;
     }
 
-    public MarkerModel(String ownerId, double latitude, double longtitude, String title) {
+    public MarkerModel(String ownerId, double latitude, double longtitude, String title, String date) {
         this.ownerId = ownerId;
         this.latitude = latitude;
         this.longtitude = longtitude;
+        this.date = date;
         this.title = title;
     }
 
@@ -49,6 +53,10 @@ public class MarkerModel extends SugarRecord{
         this.latitude = latitude;
     }
 
-
-
+    public String getDate() {
+        return date;
+    }
+    public void setDate(String date) {
+        this.date = date;
+    }
 }

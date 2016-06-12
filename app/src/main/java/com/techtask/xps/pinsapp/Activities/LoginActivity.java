@@ -55,8 +55,6 @@ public class LoginActivity extends AppCompatActivity {
                 Log.e("Error","Login attempt failed " + error.toString());
             }
         });
-
-        //Log.i("################", "   "+ isLoggedIn() + AccessToken.getCurrentAccessToken().getUserId());
     }
 
 

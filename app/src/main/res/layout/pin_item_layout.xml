@@ -1,18 +1,31 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/item"
     android:layout_width="match_parent"
-    android:layout_height="?listPreferredItemHeight"
+    android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?selectableItemBackground">
 
     <TextView
-        android:id="@+id/itemText"
-        android:layout_width="wrap_content"
+        android:id="@+id/addressTextView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_marginRight="10dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_toLeftOf="@+id/handle" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/dateTextView"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_below="@+id/addressTextView"
+        android:layout_toLeftOf="@+id/handle" />
 
     <ImageView
         android:id="@+id/handle"
@@ -20,5 +33,9 @@
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical|right"
         android:scaleType="center"
-        android:src="@drawable/ic_reorder_grey" />
-</FrameLayout>
+        android:src="@drawable/ic_reorder_grey"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignBottom="@+id/dateTextView" />
+
+</RelativeLayout>

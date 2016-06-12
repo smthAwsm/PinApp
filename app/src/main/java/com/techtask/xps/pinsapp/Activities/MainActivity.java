@@ -2,6 +2,8 @@ package com.techtask.xps.pinsapp.Activities;
 
 import android.app.Dialog;
 import android.content.IntentSender;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 
 import android.os.Bundle;
@@ -10,6 +12,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -30,11 +34,17 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.techtask.xps.pinsapp.Adapters.FragmentPagerAdapter;
+import com.techtask.xps.pinsapp.Fragments.PinsFragment;
 import com.techtask.xps.pinsapp.Models.MarkerModel;
 import com.techtask.xps.pinsapp.R;
 
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -44,32 +54,35 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                                         GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
     private SupportMapFragment mapFragment;
-    private GoogleMap googleMap;
+    private static GoogleMap googleMap;
 
-    private GoogleApiClient mGoogleApiClient;
-    private LocationRequest mLocationRequest;
+    private GoogleApiClient googleApiClient;
+    private LocationRequest locationRequest;
     private long UPDATE_INTERVAL = 60000;  /* 60 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private final String CURRENT_USER_ID = AccessToken.getCurrentAccessToken().getUserId();
-    private List<MarkerModel> markers;
-    private Map<String,MarkerModel> markerModelBinding = new HashMap<>();
+    private final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm");
+    private static ViewPager viewPager;
+
+    public static List<MarkerModel> markers;
+    private static Map<String,MarkerModel> markerModelBinding = new HashMap<>();
+    private static Map<MarkerModel,Marker> modelMarkerBinding = new HashMap<>();
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
 
-
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
         FragmentPagerAdapter pagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
 
         PagerSlidingTabStrip tabsStrip = (PagerSlidingTabStrip) findViewById(R.id.tabs);
         tabsStrip.setViewPager(viewPager);
 
-        markers = MarkerModel.listAll(MarkerModel.class);
-        //markers = MarkerModel.find(MarkerModel.class,"ownerId = ?",CURRENT_USER_ID);
+        markers = MarkerModel.find(MarkerModel.class,"owner_Id = ?",CURRENT_USER_ID);
         loadMapIfNeeded(pagerAdapter);
     }
 
@@ -97,16 +110,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 @Override
                 public void onMapClick(LatLng latLng) {
                     if(googleMap.getCameraPosition().zoom > 14) {
+                        String date = DATE_FORMAT.format(Calendar.getInstance().getTime());
+                        String address = getCompleteAddressString(latLng);
 
-                        String keyId = googleMap.addMarker(new MarkerOptions()
+                        Marker marker = googleMap.addMarker(new MarkerOptions()
                                 .draggable(true)
                                 .position(latLng)
-                                .title("azazaz")).getId();
+                                .title(address));
 
-                        MarkerModel marker = new MarkerModel(CURRENT_USER_ID,latLng.latitude,latLng.longitude,"azazaz");
-                        marker.save();
-                        markers.add(marker);
-                        markerModelBinding.put(keyId,marker);
+                        String keyId = marker.getId();
+
+                        MarkerModel markerModel = new MarkerModel(CURRENT_USER_ID,latLng.latitude,latLng.longitude,address,date);
+                        markers.add(markerModel);
+                        markerModel.save();
+                        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
+
+                        markerModelBinding.put(keyId,markerModel);
+                        modelMarkerBinding.put(markerModel,marker);
                     }
                 }
             });
@@ -114,16 +134,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
                 @Override
                 public void onMarkerDragStart(Marker marker) {
-                    MarkerModel markerModel = markerModelBinding.get(marker.getId());
-                    markerModel.delete();
-                    marker.remove();
+                  deleteMarker(marker);
                 }
 
                 @Override
                 public void onMarkerDrag(Marker marker) {
 
                 }
-
                 @Override
                 public void onMarkerDragEnd(Marker marker) {
 
@@ -136,10 +153,37 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
+    public static void deleteMarker(Marker marker){
+        MarkerModel markerModel = markerModelBinding.get(marker.getId());
+        markerModel.delete();
+        marker.remove();
+        markerModelBinding.remove(marker.getId());
+        modelMarkerBinding.remove(markerModel);
+        markers.remove(markerModel);
+        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
+    }
+
+    public static void deleteMarker(MarkerModel markerModel){
+        Marker marker = modelMarkerBinding.get(markerModel);
+        markerModel.delete();
+        marker.remove();
+        markerModelBinding.remove(marker.getId());
+        modelMarkerBinding.remove(markerModel);
+        markers.remove(markerModel);
+        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
+    }
+
+    public static void showMarker(MarkerModel markerModel){
+        viewPager.setCurrentItem(0,true);
+        Marker marker = modelMarkerBinding.get(markerModel);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 17);
+        googleMap.animateCamera(cameraUpdate);
+
+    }
     private void getMyLocation() {
         if (googleMap != null) {
             googleMap.setMyLocationEnabled(true);
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
+            googleApiClient = new GoogleApiClient.Builder(this)
                     .addApi(LocationServices.API)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this).build();
@@ -148,8 +192,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     protected void connectClient() {
-        if (isGooglePlayServicesAvailable() && mGoogleApiClient != null) {
-            mGoogleApiClient.connect();
+        if (isGooglePlayServicesAvailable() && googleApiClient != null) {
+            googleApiClient.connect();
         }
     }
 
@@ -175,18 +219,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onConnected(Bundle dataBundle) {
 
         if(markers != null){
-            for (MarkerModel marker : markers){
-                LatLng latLng = new LatLng(marker.getLatitude(),marker.getLongtitude());
-                String keyId = googleMap.addMarker(new MarkerOptions().draggable(true).position(latLng).title(marker.getTitle())).getId();
-                markerModelBinding.put(keyId,marker);
+            for (MarkerModel markerModel : markers){
+                LatLng latLng = new LatLng(markerModel.getLatitude(),markerModel.getLongtitude());
+                Marker marker = googleMap.addMarker(new MarkerOptions().draggable(true).position(latLng).title(markerModel.getTitle()));
+                String keyId = marker.getId();
+                markerModelBinding.put(keyId,markerModel);
+                modelMarkerBinding.put(markerModel,marker);
             }
         }
 
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
         if (location != null) {
             Toast.makeText(this, "GPS location was found!", Toast.LENGTH_SHORT).show();
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
             googleMap.animateCamera(cameraUpdate);
             } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
@@ -195,11 +241,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     protected void startLocationUpdates() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-        mLocationRequest.setInterval(UPDATE_INTERVAL);
-        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,mLocationRequest, this);
+        locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
+        LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
     @Override
@@ -251,4 +297,31 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             return mDialog;
         }
     }
+
+    private String getCompleteAddressString(LatLng latLng) {
+
+        String strAdd = "";      
+
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addresses != null) {
+                Address returnedAddress = addresses.get(0);
+                StringBuilder strReturnedAddress = new StringBuilder("");
+
+                for (int i = 0; i < returnedAddress.getMaxAddressLineIndex(); i++) {
+                    strReturnedAddress.append(returnedAddress.getAddressLine(i));
+                }
+                strAdd = strReturnedAddress.toString();
+                } else {
+                Log.w("My Current location", "no Address returned!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.w("My Current location", "Canont get Address!");
+        }
+        return strAdd;
+    }
+
+
 }

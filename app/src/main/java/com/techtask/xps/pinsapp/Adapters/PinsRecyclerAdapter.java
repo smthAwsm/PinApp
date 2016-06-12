@@ -11,9 +11,11 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.techtask.xps.pinsapp.Activities.MainActivity;
 import com.techtask.xps.pinsapp.Helper.ItemTouchHelperAdapter;
 import com.techtask.xps.pinsapp.Helper.ItemTouchHelperViewHolder;
 import com.techtask.xps.pinsapp.Helper.OnStartDragListener;
+import com.techtask.xps.pinsapp.Models.MarkerModel;
 import com.techtask.xps.pinsapp.R;
 
 import java.util.ArrayList;
@@ -26,14 +28,12 @@ import java.util.List;
  */
 public class PinsRecyclerAdapter extends RecyclerView.Adapter<PinsRecyclerAdapter.ItemViewHolder> implements ItemTouchHelperAdapter
 {
+    private final OnStartDragListener dragStartListener;
+    private List<MarkerModel> markersData = new ArrayList<>();
 
-        private final List<String> mItems = new ArrayList<>();
-
-        private final OnStartDragListener mDragStartListener;
-
-        public PinsRecyclerAdapter(Context context, OnStartDragListener dragStartListener) {
-            mDragStartListener = dragStartListener;
-            mItems.addAll(Arrays.asList(context.getResources().getStringArray(R.array.dummy_items)));
+        public PinsRecyclerAdapter(Context context, List<MarkerModel> markersData,OnStartDragListener dragStartListener) {
+            this.dragStartListener = dragStartListener;
+            this.markersData = markersData;
         }
 
         @Override
@@ -44,54 +44,66 @@ public class PinsRecyclerAdapter extends RecyclerView.Adapter<PinsRecyclerAdapte
         }
 
         @Override
-        public void onBindViewHolder(final ItemViewHolder holder, int position) {
-            holder.textView.setText(mItems.get(position));
+        public void onBindViewHolder(final ItemViewHolder holder, final int position) {
 
-            // Start a drag whenever the handle view it touched
+            holder.addressView.setText(markersData.get(position).getTitle());
+            holder.dateView.setText(markersData.get(position).getDate());
+
             holder.handleView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
                     if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
-                        mDragStartListener.onStartDrag(holder);
+                        dragStartListener.onStartDrag(holder);
                     }
                     return false;
+                }
+            });
+
+            holder.viewItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    MainActivity.showMarker(markersData.get(position));
                 }
             });
         }
 
         @Override
         public void onItemDismiss(int position) {
-            mItems.remove(position);
+            MainActivity.deleteMarker(markersData.get(position));
+            //markersData.remove(position);
             notifyItemRemoved(position);
         }
 
         @Override
         public boolean onItemMove(int fromPosition, int toPosition) {
-            Collections.swap(mItems, fromPosition, toPosition);
+            Collections.swap(markersData, fromPosition, toPosition);
             notifyItemMoved(fromPosition, toPosition);
             return true;
         }
 
         @Override
         public int getItemCount() {
-            return mItems.size();
+            return markersData.size();
         }
 
-        /**
-         * Simple example of a view holder that implements {@link ItemTouchHelperViewHolder} and has a
-         * "handle" view that initiates a drag event when touched.
-         */
+
+
         public static class ItemViewHolder extends RecyclerView.ViewHolder implements
                 ItemTouchHelperViewHolder {
 
-            public final TextView textView;
+            public final View viewItem;
+            public final TextView addressView;
+            public final TextView dateView;
             public final ImageView handleView;
 
             public ItemViewHolder(View itemView) {
                 super(itemView);
-                textView = (TextView) itemView.findViewById(R.id.itemText);
+
+                viewItem = itemView;
+                addressView = (TextView) itemView.findViewById(R.id.addressTextView);
+                dateView = (TextView) itemView.findViewById(R.id.dateTextView);
                 handleView = (ImageView) itemView.findViewById(R.id.handle);
-            }
+           }
 
             @Override
             public void onItemSelected() {
@@ -103,6 +115,4 @@ public class PinsRecyclerAdapter extends RecyclerView.Adapter<PinsRecyclerAdapte
                 itemView.setBackgroundColor(0);
             }
         }
-
-
 }
