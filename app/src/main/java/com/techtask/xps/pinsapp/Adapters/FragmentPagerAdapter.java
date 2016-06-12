@@ -38,18 +38,12 @@ public class FragmentPagerAdapter extends FragmentStatePagerAdapter {
 
         switch (position){
             case 0:{
-                //GoogleMapOptions mapOptions = new GoogleMapOptions();
-                //mapOptions.compassEnabled(true);
-                //mapOptions.mapType(GoogleMap.MAP_TYPE_HYBRID);
-                //return MapFragment.create(mapOptions,new ArrayList<MarkerOptions>());
-
                 return mapFragment;
             }
             case 1:{
                 return new PinsFragment();
             }
         }
-        //Log.e("QAZXSWED","@@@@@@@@@@@@@@@@@@" + position + "%%%%%%%%%%%%%%%%%%%%%%%%%");
         return PageFragment.newInstance(position + 1);
     }
 

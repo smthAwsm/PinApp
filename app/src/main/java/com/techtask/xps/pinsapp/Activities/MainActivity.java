@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
+import com.facebook.AccessToken;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -29,9 +30,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.techtask.xps.pinsapp.Adapters.FragmentPagerAdapter;
+import com.techtask.xps.pinsapp.Models.MarkerModel;
 import com.techtask.xps.pinsapp.R;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by XPS on 6/11/2016.
@@ -47,12 +51,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private long UPDATE_INTERVAL = 60000;  /* 60 secs */
     private long FASTEST_INTERVAL = 5000; /* 5 secs */
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-    private List<Marker> markers;
+    private final String CURRENT_USER_ID = AccessToken.getCurrentAccessToken().getUserId();
+    private List<MarkerModel> markers;
+    private Map<String,MarkerModel> markerModelBinding = new HashMap<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
+
 
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
         FragmentPagerAdapter pagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager());
@@ -60,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         PagerSlidingTabStrip tabsStrip = (PagerSlidingTabStrip) findViewById(R.id.tabs);
         tabsStrip.setViewPager(viewPager);
+
+        markers = MarkerModel.listAll(MarkerModel.class);
+        //markers = MarkerModel.find(MarkerModel.class,"ownerId = ?",CURRENT_USER_ID);
         loadMapIfNeeded(pagerAdapter);
     }
 
@@ -87,11 +97,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 @Override
                 public void onMapClick(LatLng latLng) {
                     if(googleMap.getCameraPosition().zoom > 14) {
-                        googleMap.addMarker(new MarkerOptions()
+
+                        String keyId = googleMap.addMarker(new MarkerOptions()
                                 .draggable(true)
                                 .position(latLng)
-                                .title("azazaz"));
+                                .title("azazaz")).getId();
 
+                        MarkerModel marker = new MarkerModel(CURRENT_USER_ID,latLng.latitude,latLng.longitude,"azazaz");
+                        marker.save();
+                        markers.add(marker);
+                        markerModelBinding.put(keyId,marker);
                     }
                 }
             });
@@ -99,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
                 @Override
                 public void onMarkerDragStart(Marker marker) {
+                    MarkerModel markerModel = markerModelBinding.get(marker.getId());
+                    markerModel.delete();
                     marker.remove();
                 }
 
@@ -156,14 +173,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnected(Bundle dataBundle) {
+
+        if(markers != null){
+            for (MarkerModel marker : markers){
+                LatLng latLng = new LatLng(marker.getLatitude(),marker.getLongtitude());
+                String keyId = googleMap.addMarker(new MarkerOptions().draggable(true).position(latLng).title(marker.getTitle())).getId();
+                markerModelBinding.put(keyId,marker);
+            }
+        }
+
         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (location != null) {
             Toast.makeText(this, "GPS location was found!", Toast.LENGTH_SHORT).show();
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
             googleMap.animateCamera(cameraUpdate);
-            //googleMap.addMarker(new MarkerOptions().position(latLng)).setTitle("ur position !");
-        } else {
+            } else {
             Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
         }
         startLocationUpdates();

@@ -5,22 +5,23 @@ import com.orm.SugarRecord;
 /**
  * Created by XPS on 6/12/2016.
  */
-public class Marker extends SugarRecord{
+public class MarkerModel extends SugarRecord{
 
-    private int ownerId;
+    private String ownerId;
     private double latitude;
     private double longtitude;
     private String title;
 
-    public Marker() {
+    public MarkerModel() {
     }
 
-    public Marker(int ownerId,double latitude,double longtitude) {
+    public MarkerModel(int ownerId, double latitude, double longtitude) {
         this.latitude = latitude;
         this.longtitude = longtitude;
     }
 
-    public Marker(int ownerId,double latitude,double longtitude,String title) {
+    public MarkerModel(String ownerId, double latitude, double longtitude, String title) {
+        this.ownerId = ownerId;
         this.latitude = latitude;
         this.longtitude = longtitude;
         this.title = title;
