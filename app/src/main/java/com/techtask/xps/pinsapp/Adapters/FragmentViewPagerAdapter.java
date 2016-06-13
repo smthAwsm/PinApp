@@ -26,6 +26,7 @@ public class FragmentViewPagerAdapter extends FragmentStatePagerAdapter {
     public FragmentViewPagerAdapter(FragmentManager fm) {
         super(fm);
         mapFragment = new SupportMapFragment();
+        mapFragment.setRetainInstance(true);
     }
 
     @Override

@@ -13,6 +13,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 
+import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -21,18 +22,21 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
+import com.facebook.login.LoginManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -47,10 +51,16 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.techtask.xps.pinsapp.Adapters.FragmentViewPagerAdapter;
 import com.techtask.xps.pinsapp.Fragments.PinsFragment;
 import com.techtask.xps.pinsapp.Models.MarkerModel;
 import com.techtask.xps.pinsapp.R;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -78,10 +88,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy, HH:mm");
     private static ViewPager viewPager;
     private AppBarLayout appBarLayout;
+    private static ImageLoader imageLoader;
 
     public static List<MarkerModel> markers;
     private static Map<String,MarkerModel> markerModelBinding = new HashMap<>();
     private static Map<MarkerModel,Marker> modelMarkerBinding = new HashMap<>();
+
+
 
 
     @Override
@@ -89,25 +102,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
 
-        URL img_url = null;
-        String id = AccessToken.getCurrentAccessToken().getUserId();
-
-
-        try {
-            img_url = new URL("http://graph.facebook.com/"+id+"/picture?type=normal");
-            Log.w("RESPONXXXXXE",img_url.openConnection().getInputStream().toString());
-        } catch (Exception e) {
-            Log.e("MalformedURLException","%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%555");
-            e.printStackTrace();
-        }
-
-
-
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
+        imageLoader = ImageLoader.getInstance();
+        imageLoader.init(config);
 
         FragmentViewPagerAdapter pagerAdapter = new FragmentViewPagerAdapter(getSupportFragmentManager());
         setupActionBar(pagerAdapter);
         markers = MarkerModel.find(MarkerModel.class,"owner_Id = ?",CURRENT_USER_ID);
         loadMapIfNeeded(pagerAdapter);
+
     }
 
     private void setupActionBar(FragmentViewPagerAdapter pagerAdapter){
@@ -115,8 +118,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         final Toolbar toolbar = (Toolbar) findViewById(R.id.htab_toolbar);
         setSupportActionBar(toolbar);
 
-        getSupportActionBar().setTitle("Parallax Tabs");
-        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        getSupportActionBar().setTitle(getString(R.string.app_name));
+        getProfileName(getSupportActionBar());
+
+        getProfileCover();
 
         viewPager = (ViewPager) findViewById(R.id.htab_viewpager);
         viewPager.setAdapter(pagerAdapter);
@@ -125,23 +130,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.htab_collapse_toolbar);
         collapsingToolbarLayout.setTitleEnabled(false);
 
-
-        new GraphRequest(
-                AccessToken.getCurrentAccessToken(),
-                //"/"+AccessToken.getCurrentAccessToken().getUserId()+"?fields=id,name,picture",
-                "/"+AccessToken.getCurrentAccessToken().getUserId(),
-                null,
-                HttpMethod.GET,
-                new GraphRequest.Callback() {
-                    public void onCompleted(GraphResponse response) {
-                    Log.e("AZAZAAZ",response.toString());
-                     //response
-                    }
-                }
-        ).executeAsync();
-
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
-                R.drawable.header);
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.header);
 
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             @SuppressWarnings("ResourceType")
@@ -184,8 +173,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         });
     }
 
-
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -196,6 +183,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public boolean onOptionsItemSelected(MenuItem item) {
 
         if (item.getItemId() == R.id.logoutItem){
+            LoginManager.getInstance().logOut();
         finish();
         }
         return super.onOptionsItemSelected(item);
@@ -213,12 +201,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         setUpMap();
                 }
             });
-        } else Toast.makeText(this, "Error - Map Fragment was null!!", Toast.LENGTH_SHORT).show();
+        } else Log.e("ERROR","Error - Map Fragment was null!!");
     }
 
     protected void setUpMap() {
         if (googleMap != null) {
-             Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
              googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
             googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -268,33 +256,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
-    public static void deleteMarker(Marker marker){
-        MarkerModel markerModel = markerModelBinding.get(marker.getId());
-        markerModel.delete();
-        marker.remove();
-        markerModelBinding.remove(marker.getId());
-        modelMarkerBinding.remove(markerModel);
-        markers.remove(markerModel);
-        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        setResult(0);
+        finish();
     }
 
-    public static void deleteMarker(MarkerModel markerModel){
-        Marker marker = modelMarkerBinding.get(markerModel);
-        markerModel.delete();
-        marker.remove();
-        markerModelBinding.remove(marker.getId());
-        modelMarkerBinding.remove(markerModel);
-        markers.remove(markerModel);
-        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
-    }
-
-    public static void showMarker(MarkerModel markerModel){
-        viewPager.setCurrentItem(0,true);
-        Marker marker = modelMarkerBinding.get(markerModel);
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 17);
-        googleMap.animateCamera(cameraUpdate);
-
-    }
     private void getMyLocation() {
         if (googleMap != null) {
             googleMap.setMyLocationEnabled(true);
@@ -368,9 +336,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
            String msg = "Updated Location: " +
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-
     @Override
     public void onConnectionSuspended(int i) {
         if (i == CAUSE_SERVICE_DISCONNECTED) {
@@ -379,7 +346,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             Toast.makeText(this, "Network lost. Please re-connect.", Toast.LENGTH_SHORT).show();
         }
     }
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         if (connectionResult.hasResolution()) {
@@ -429,13 +395,83 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 }
                 strAdd = strReturnedAddress.toString();
                 } else {
-                Log.w("My Current location", "no Address returned!");
+                Log.w("Current location", "no Address returned!");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.w("My Current location", "Canont get Address!");
+            Log.w("Current location", "Canont get Address!");
         }
         return strAdd;
+    }
+
+    public static void deleteMarker(Marker marker){
+        MarkerModel markerModel = markerModelBinding.get(marker.getId());
+        markerModel.delete();
+        marker.remove();
+        markerModelBinding.remove(marker.getId());
+        modelMarkerBinding.remove(markerModel);
+        markers.remove(markerModel);
+        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
+    }
+    public static void deleteMarker(MarkerModel markerModel){
+        Marker marker = modelMarkerBinding.get(markerModel);
+        markerModel.delete();
+        marker.remove();
+        markerModelBinding.remove(marker.getId());
+        modelMarkerBinding.remove(markerModel);
+        markers.remove(markerModel);
+        PinsFragment.getRecyclerAdapter().notifyDataSetChanged();
+    }
+    public static void showMarker(MarkerModel markerModel){
+        viewPager.setCurrentItem(0,true);
+        Marker marker = modelMarkerBinding.get(markerModel);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 17);
+        googleMap.animateCamera(cameraUpdate);
+
+    }
+
+    private void getProfileName(final ActionBar actionBar){
+
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"+AccessToken.getCurrentAccessToken().getUserId(),
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        JSONObject obj = response.getJSONObject();
+                        try {
+                            String userName = obj.getString("name");
+                            actionBar.setTitle(userName);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        ).executeAsync();
+    }
+    private void getProfileCover(){
+        Bundle params = new Bundle();
+        params.putString("fields", "cover");
+
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "me", params,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        try {
+                            JSONObject obj = response.getJSONObject();
+                            JSONObject JOSource = obj.optJSONObject("cover");
+                            String coverPhoto = JOSource.getString("source");
+                            ImageView imageView = (ImageView) findViewById(R.id.htab_header);
+                            imageLoader.displayImage(coverPhoto,imageView);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        ).executeAsync();
     }
 
 

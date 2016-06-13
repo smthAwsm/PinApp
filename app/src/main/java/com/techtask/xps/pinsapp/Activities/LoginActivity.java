@@ -5,24 +5,16 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
-import com.facebook.GraphRequest;
-import com.facebook.GraphResponse;
-import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-import com.techtask.xps.pinsapp.Models.User;
 import com.techtask.xps.pinsapp.R;
-
-import org.json.JSONObject;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -42,7 +34,8 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-              startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+                startActivityForResult(intent, 0);
             }
 
             @Override
@@ -57,10 +50,17 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        setResult(0);
+        finish();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         callbackManager.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == 0)
+            finish();
     }
 }
