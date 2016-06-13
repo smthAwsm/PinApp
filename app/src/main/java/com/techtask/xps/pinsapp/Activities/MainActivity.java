@@ -446,6 +446,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
+                        catch (NullPointerException e){
+                            e.printStackTrace();
+                            actionBar.setTitle(getString(R.string.app_name));
+                        }
                     }
                 }
         ).executeAsync();
@@ -467,6 +471,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             ImageView imageView = (ImageView) findViewById(R.id.htab_header);
                             imageLoader.displayImage(coverPhoto,imageView);
                         } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        catch (NullPointerException e)
+                        {
                             e.printStackTrace();
                         }
                     }
