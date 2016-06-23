@@ -1,6 +1,6 @@
 package com.techtask.xps.pinsapp.Activities;
 
-
+import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,6 +21,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private LoginButton loginButton;
     private CallbackManager callbackManager;
+    private Context context = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onError(FacebookException error) {
-                Log.e("Error","Login attempt failed " + error.toString());
+                Toast.makeText(context,"Login attempt failed " + error.toString(),Toast.LENGTH_SHORT).show();
             }
         });
     }

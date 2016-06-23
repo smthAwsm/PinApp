@@ -2,8 +2,6 @@ package com.techtask.xps.pinsapp.Models;
 
 import com.orm.SugarRecord;
 
-import java.util.Date;
-
 /**
  * Created by XPS on 6/12/2016.
  */

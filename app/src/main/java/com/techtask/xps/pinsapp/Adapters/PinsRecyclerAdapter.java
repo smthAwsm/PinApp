@@ -14,12 +14,12 @@ import android.widget.TextView;
 import com.techtask.xps.pinsapp.Activities.MainActivity;
 import com.techtask.xps.pinsapp.Helper.ItemTouchHelperAdapter;
 import com.techtask.xps.pinsapp.Helper.ItemTouchHelperViewHolder;
+import com.techtask.xps.pinsapp.Helper.MapHelper;
 import com.techtask.xps.pinsapp.Helper.OnStartDragListener;
 import com.techtask.xps.pinsapp.Models.MarkerModel;
 import com.techtask.xps.pinsapp.R;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,14 +62,14 @@ public class PinsRecyclerAdapter extends RecyclerView.Adapter<PinsRecyclerAdapte
             holder.viewItem.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MainActivity.showMarker(markersData.get(position));
+                    MapHelper.showMarker(markersData.get(position));
                 }
             });
         }
 
         @Override
         public void onItemDismiss(int position) {
-            MainActivity.deleteMarker(markersData.get(position));
+            MapHelper.deleteMarker(markersData.get(position));
             //markersData.remove(position);
             notifyItemRemoved(position);
         }
@@ -85,8 +85,6 @@ public class PinsRecyclerAdapter extends RecyclerView.Adapter<PinsRecyclerAdapte
         public int getItemCount() {
             return markersData.size();
         }
-
-
 
         public static class ItemViewHolder extends RecyclerView.ViewHolder implements
                 ItemTouchHelperViewHolder {

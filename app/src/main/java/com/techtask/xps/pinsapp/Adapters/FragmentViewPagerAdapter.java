@@ -3,17 +3,9 @@ package com.techtask.xps.pinsapp.Adapters;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.util.Log;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.techtask.xps.pinsapp.Fragments.MapFragment;
-import com.techtask.xps.pinsapp.Fragments.PageFragment;
 import com.techtask.xps.pinsapp.Fragments.PinsFragment;
-
-import java.util.ArrayList;
 
 /**
  * Created by XPS on 6/11/2016.
@@ -45,7 +37,7 @@ public class FragmentViewPagerAdapter extends FragmentStatePagerAdapter {
                 return new PinsFragment();
             }
         }
-        return PageFragment.newInstance(position + 1);
+        return null;
     }
 
     @Override

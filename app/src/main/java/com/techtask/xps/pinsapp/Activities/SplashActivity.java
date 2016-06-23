@@ -26,22 +26,9 @@ public class SplashActivity extends Activity {
         updateWithToken(AccessToken.getCurrentAccessToken());
 
         isLoggedIn();
-//            Intent intent = new Intent(this, MainActivity.class);
-//            startActivityForResult(intent, 0);
-//        }
-//
-//        if(!isLoggedIn()){
-//            Intent intent = new Intent(this,LoginActivity.class);
-//            startActivityForResult(intent, 0);
-//        }
-
-
     }
 
     public void isLoggedIn() {
-
-        //AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        //return accessToken != null;
 
         AccessTokenTracker accessTokenTracker = new AccessTokenTracker() {
             @Override
@@ -49,7 +36,6 @@ public class SplashActivity extends Activity {
                 updateWithToken(newAccessToken);
             }
         };
-
     }
 
     @Override
